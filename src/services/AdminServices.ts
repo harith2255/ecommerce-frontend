@@ -98,3 +98,40 @@ export const blockUser = async (token: string, userId: string) => {
     if (!res.ok) throw new Error('Failed to block user');
     return res.json();
 };
+// categories
+export const fetchCategories = async (token: string) => {
+  const res = await fetch(API_URL, {
+    headers: getAuthHeaders(token),
+  });
+  if (!res.ok) throw new Error("Failed to fetch categories");
+  return res.json();
+};
+
+export const createCategory = async (token: string, data: any) => {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: getAuthHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create category");
+  return res.json();
+};
+
+export const updateCategory = async (token: string, id: string, data: any) => {
+  const res = await fetch(`${API_URL}/${id}`, {
+    method: "PUT",
+    headers: getAuthHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update category");
+  return res.json();
+};
+
+export const deleteCategory = async (token: string, id: string) => {
+  const res = await fetch(`${API_URL}/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(token),
+  });
+  if (!res.ok) throw new Error("Failed to delete category");
+  return res.json();
+};

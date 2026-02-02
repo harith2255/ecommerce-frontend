@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect  } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../../components/Button';
@@ -6,17 +6,24 @@ import { Modal, ConfirmModal } from '../../components/Modal';
 import { Input } from '../../components/Input';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import {
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from "../../services/AdminServices";
+
 
 
 interface Category {
-  id: string;
+  _id: string;
   name: string;
   slug: string;
   description?: string;
 }
 
 export function AdminCategories() {
-  const { user} = useAuth();
+  const { user,token} = useAuth();
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -30,6 +37,17 @@ export function AdminCategories() {
     slug: '',
     description: ''
   });
+  
+
+useEffect(() => {
+  const loadCategories = async () => {
+    if (!token) return;
+    const data = await fetchCategories(token);
+    setCategories(data);
+  };
+  loadCategories();
+}, [token]);
+
 
   const filteredCategories = categories.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -54,29 +72,45 @@ export function AdminCategories() {
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const categoryData: Category = {
-      id: editingCategory?.id || `cat-${Date.now()}`,
-      name: formData.name,
-      slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-'),
-      description: formData.description
-    };
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (editingCategory) {
-      setCategories(categories.map(c => c.id === editingCategory.id ? categoryData : c));
-    } else {
-      setCategories([...categories, categoryData]);
-    }
-    
-    setShowModal(false);
+  if (!token) return;
+
+  const payload = {
+    name: formData.name,
+    slug:
+      formData.slug ||
+      formData.name.toLowerCase().replace(/\s+/g, "-"),
+    description: formData.description,
   };
 
-  const handleDelete = (id: string) => {
-    setCategories(categories.filter(c => c.id !== id));
-    setDeleteModal(null);
-  };
+  if (editingCategory) {
+    const updated = await updateCategory(
+      token,
+      editingCategory._id,
+      payload
+    );
+    setCategories((prev) =>
+      prev.map((c) => (c._id === updated._id ? updated : c))
+    );
+  } else {
+    const created = await createCategory(token, payload);
+    setCategories((prev) => [created, ...prev]);
+  }
+
+  setShowModal(false);
+};
+
+
+const handleDelete = async (id: string) => {
+  if (!token) return;
+
+  await deleteCategory(token, id);
+  setCategories((prev) => prev.filter((c) => c._id !== id));
+  setDeleteModal(null);
+};
+
 
   return (
     <AdminLayout title="Category Management">
@@ -101,7 +135,7 @@ export function AdminCategories() {
       {/* Categories Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCategories.map((category) => (
-          <div key={category.id} className="bg-white rounded-lg border border-gray-200 p-6">
+          <div key={category._id} className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-1">
@@ -117,7 +151,7 @@ export function AdminCategories() {
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => setDeleteModal(category.id)}
+                  onClick={() => setDeleteModal(category._id)}
                   className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
