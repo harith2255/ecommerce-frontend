@@ -99,6 +99,7 @@ export const blockUser = async (token: string, userId: string) => {
     return res.json();
 };
 // categories
+// categories
 export const fetchCategories = async (token: string) => {
   const res = await fetch(API_URL, {
     headers: getAuthHeaders(token),
