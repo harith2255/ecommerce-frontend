@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect  } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { Search, Eye, Package } from 'lucide-react';
 import { Badge } from '../../components/Badge';
@@ -6,6 +6,7 @@ import { Modal } from '../../components/Modal';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { fetchAdminOrders, updateOrderStatus } from '../../services/AdminServices';
 
 interface OrderItem {
   productId: string;
@@ -16,7 +17,7 @@ interface OrderItem {
 }
 
 interface Order {
-  id: string;
+  _id: string;
   user:{
     name:string;
     email:string;
@@ -37,15 +38,34 @@ interface Order {
 
 
 export function AdminOrders() {
-  const {  user } = useAuth();
+  const {  user,token } = useAuth();
+  const [loading,setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
 
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      if (!token) return;
+      try {
+        const data = await fetchAdminOrders(token);
+        setOrders(data);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        
+      }finally {
+        setLoading(false);
+      }
+    };
+    loadOrders();
+  }, [token]);
+
+
   const filteredOrders = orders
     .filter(o => 
-      o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.shippingAddress.fullName.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .filter(o => statusFilter === 'all' || o.status === statusFilter);
@@ -60,12 +80,16 @@ export function AdminOrders() {
     }
   };
 
-  const handleUpdateStatus = (orderId: string, newStatus: Order['status']) => {
-    setOrders(orders.map(o => 
-      o.id === orderId ? { ...o, status: newStatus } : o
-    ));
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder({ ...selectedOrder, status: newStatus });
+  const handleUpdateStatus = async (orderId: string, newStatus: Order["status"]) => {
+    if(!token) return;
+
+    const updated = await updateOrderStatus(token, orderId, newStatus);
+    setOrders((prev)=>
+      prev.map(o => o._id === orderId ? { ...o, status: updated.status } : o)
+    );
+
+    if(selectedOrder?._id === orderId){
+      setSelectedOrder(updated);
     }
   };
 
@@ -127,18 +151,18 @@ export function AdminOrders() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredOrders.map((order) => {
-                const user = user.find(u => u.id === order.userId);
+               
                 return (
-                  <tr key={order.id} className="hover:bg-gray-50">
+                  <tr key={order._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-900">{order.id}</span>
+                      <span className="text-sm font-medium text-gray-900">{order._id}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {order.shippingAddress.fullName}
+                          {order.user?.name || 'Guest'}
                         </p>
-                        <p className="text-sm text-gray-500">{user?.email || 'Guest'}</p>
+                        <p className="text-sm text-gray-500">{order.user?.email || 'Guest'}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -187,7 +211,7 @@ export function AdminOrders() {
         <Modal
           isOpen={!!selectedOrder}
           onClose={() => setSelectedOrder(null)}
-          title={`Order ${selectedOrder.id}`}
+          title={`Order ${selectedOrder._id}`}
           size="lg"
         >
           <div className="space-y-6">
@@ -220,7 +244,7 @@ export function AdminOrders() {
               <h4 className="font-semibold text-gray-900 mb-3">Order Items</h4>
               <div className="space-y-3">
                 {selectedOrder.items.map((item) => (
-                  <div key={item.id} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div key={item._id} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                       <img
                         src={item.image}
@@ -264,28 +288,28 @@ export function AdminOrders() {
                 <Button
                   size="sm"
                   variant={selectedOrder.status === 'pending' ? 'primary' : 'outline'}
-                  onClick={() => handleUpdateStatus(selectedOrder.id, 'pending')}
+                  onClick={() => handleUpdateStatus(selectedOrder._id, 'pending')}
                 >
                   Pending
                 </Button>
                 <Button
                   size="sm"
                   variant={selectedOrder.status === 'shipped' ? 'primary' : 'outline'}
-                  onClick={() => handleUpdateStatus(selectedOrder.id, 'shipped')}
+                  onClick={() => handleUpdateStatus(selectedOrder._id, 'shipped')}
                 >
                   Shipped
                 </Button>
                 <Button
                   size="sm"
                   variant={selectedOrder.status === 'delivered' ? 'primary' : 'outline'}
-                  onClick={() => handleUpdateStatus(selectedOrder.id, 'delivered')}
+                  onClick={() => handleUpdateStatus(selectedOrder._id, 'delivered')}
                 >
                   Delivered
                 </Button>
                 <Button
                   size="sm"
                   variant={selectedOrder.status === 'cancelled' ? 'danger' : 'outline'}
-                  onClick={() => handleUpdateStatus(selectedOrder.id, 'cancelled')}
+                  onClick={() => handleUpdateStatus(selectedOrder._id, 'cancelled')}
                 >
                   Cancelled
                 </Button>
