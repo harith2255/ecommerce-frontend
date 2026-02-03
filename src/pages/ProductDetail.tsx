@@ -5,22 +5,54 @@ import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+;
+import { getProductById } from "../services/productApi";
 
 export function ProductDetail() {
-  const {id} = useParams();
+  const {id} = useParams<{id: string}>();
   const navigate = useNavigate();
   const {addToCart} = useCart();
+ 
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<any>(null);
- 
-  useEffect(() => {
-    fetch(`http://localhost:5000/api/products/${id}`)
-      .then(res => res.json())
-      .then(data => setProduct(data));
+ const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+    if (!id) return;
+
+    const loadProduct = async () => {
+      try {
+        const data = await getProductById(id);
+        setProduct(data);
+      } catch (err) {
+        console.error("Failed to load product", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProduct();
   }, [id]);
+const handleAddToCart = () => {
+    addToCart(product, quantity);
+    navigate("/cart");
+  };
 
-  if (!product) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <CustomerLayout>
+        <div className="p-10 text-center">Loading product...</div>
+      </CustomerLayout>
+    );
+  }
 
+  if (!product) {
+    return (
+      <CustomerLayout>
+        <div className="p-10 text-center">Product not found</div>
+      </CustomerLayout>
+    );
+  }
 
   return (
     <CustomerLayout>
@@ -169,7 +201,7 @@ export function ProductDetail() {
         </div>
 
         {/* Related Products */}
-        {relatedProducts.length > 0 && (
+        {/* {relatedProducts.length > 0 && (
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -198,7 +230,7 @@ export function ProductDetail() {
               ))}
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </CustomerLayout>
   );

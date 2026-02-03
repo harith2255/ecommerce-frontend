@@ -1,29 +1,45 @@
-import { useState } from 'react';
+import { useState,useEffect, use } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CustomerLayout } from '../components/CustomerLayout';
 import { SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { Button } from '../components/Button';
 import { useAuth } from '../context/AuthContext';
+import {getProducts} from '../services/productApi';
 
 export function ProductListing() {
-  const auth = useAuth();
-  const products = (auth as any).products ?? [];
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
 
-  const filteredProducts = products
-    .filter(p => p.status === 'active')
-    .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
-    .filter(p => p.price >= priceRange[0] && p.price <= priceRange[1])
-    .sort((a, b) => {
-      if (sortBy === 'price-low') return a.price - b.price;
-      if (sortBy === 'price-high') return b.price - a.price;
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
-      return 0;
-    });
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProducts();
+  }, []);
+
+const filteredProducts = products
+  .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
+  .filter(p => p.price >= priceRange[0] && p.price <= priceRange[1])
+  .sort((a, b) => {
+    if (sortBy === 'price-low') return a.price - b.price;
+    if (sortBy === 'price-high') return b.price - a.price;
+    if (sortBy === 'name') return a.name.localeCompare(b.name);
+    return 0;
+  });
+
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
 
@@ -142,7 +158,8 @@ export function ProductListing() {
                 {filteredProducts.map((product) => (
                   <div
                     key={product.id}
-                    onClick={() => navigate('/product-detail', { state: product })}
+                  onClick={() => navigate(`/product/${product._id}`)}
+
                     className="group cursor-pointer bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"
                   >
                     <div className="aspect-square overflow-hidden bg-gray-100">
