@@ -142,7 +142,7 @@ const navigate = useNavigate();
               <Button
                 className="w-full mb-3"
                 size="lg"
-                onClick={() => navigate('checkout')}
+                onClick={() => navigate('/checkout')}
               >
                 Proceed to Checkout
               </Button>
@@ -150,7 +150,7 @@ const navigate = useNavigate();
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate('products')}
+                onClick={() => navigate('/products')}
               >
                 Continue Shopping
               </Button>

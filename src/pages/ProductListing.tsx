@@ -11,7 +11,7 @@ export function ProductListing() {
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000000]);
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -61,7 +61,7 @@ const filteredProducts = products
                 <button
                   onClick={() => {
                     setSelectedCategory('all');
-                    setPriceRange([0, 5000]);
+                    setPriceRange([0, 5000000]);
                   }}
                   className="text-sm text-blue-600 hover:text-blue-700"
                 >
@@ -112,7 +112,7 @@ const filteredProducts = products
                   <input
                     type="range"
                     min="0"
-                    max="5000"
+                    max="5000000"
                     step="100"
                     value={priceRange[1]}
                     onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}

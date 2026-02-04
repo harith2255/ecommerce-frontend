@@ -6,13 +6,14 @@ import { Input } from '../components/Input';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import {placeOrder} from '../services/orderApi';
 
 export function Checkout() {
   const { cart, clearCart, totalPrice } = useCart();
-  const { user } = useAuth();
+  const { user,token } = useAuth();
   const navigate = useNavigate();
 
-
+  const [loading, setLoading] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
     fullName: '',
     address: '',
@@ -37,28 +38,31 @@ export function Checkout() {
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newOrder = {
-      id: `ORD-${Date.now()}`,
-      userId: user?.id || 'guest',
+  try {
+    await placeOrder(
+      JSON.stringify({
       items: cart,
+      subtotal,
+      shipping,
+      tax,
       total,
-      status: 'pending',
-      shippingAddress: shippingInfo,
       paymentMethod,
-      createdAt: new Date().toISOString()
-    };
-
+      shippingAddress: shippingInfo,
+    }),
+   token!
+  );
     clearCart();
-    navigate('order-confirmation');
+    navigate('/order-success');
+  } catch (error) {
+    console.error('Error placing order:', error);
+  }finally{
+    setLoading(false);
+  }
   };
 
-  if (cart.length === 0) {
-    navigate('cart');
-    return null;
-  }
 
   return (
     <CustomerLayout>
@@ -235,8 +239,8 @@ export function Checkout() {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full" size="lg">
-                  Place Order
+                <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                  {loading ? "Placing Order..." : "Place Order"}
                 </Button>
               </div>
             </div>

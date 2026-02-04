@@ -6,6 +6,7 @@ import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { fetchOrders } from '../services/orderApi';
 
 export function UserDashboard() {
   const {user,token } = useAuth();
@@ -22,25 +23,21 @@ export function UserDashboard() {
 }, [user, navigate]);
 
 // fetch user orders
-useEffect(() => {
-  const fetchOrders = async () => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/orders/user/${user?.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      setOrders(data.orders || []);
-    } catch (error) {
-      console.error('Failed to fetch orders:', error);
-    }finally{
-      setLoading(false);
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const data = await fetchOrders(user?.id,token);
+        setOrders(data.orders || []);
+      } catch (error) {
+        console.error('Error fetching user orders:', error);
+      } finally {
+        setLoading(false);
+      }
     }
-  };
-
-if(token) fetchOrders();
-}, [ token]);
+    if(token && user)
+      loadOrders();
+    
+  }, [token,user]);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
