@@ -5,8 +5,12 @@ import { SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { Button } from '../components/Button';
 import { useAuth } from '../context/AuthContext';
 import {getProducts} from '../services/productApi';
+import { useSearchParams } from "react-router-dom";
+
 
 export function ProductListing() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
@@ -14,6 +18,8 @@ export function ProductListing() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000000]);
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
+
+  const categoryFromUrl = searchParams.get("category") || "all";
 
 
   useEffect(() => {
@@ -29,9 +35,18 @@ export function ProductListing() {
     }
     loadProducts();
   }, []);
+  
+
+useEffect(() => {
+  setSelectedCategory(categoryFromUrl);
+}, [categoryFromUrl]);
 
 const filteredProducts = products
-  .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
+  .filter(
+    p =>
+      selectedCategory === "all" ||
+      p.category.toLowerCase() === selectedCategory.toLowerCase()
+  )
   .filter(p => p.price >= priceRange[0] && p.price <= priceRange[1])
   .sort((a, b) => {
     if (sortBy === 'price-low') return a.price - b.price;
@@ -41,7 +56,19 @@ const filteredProducts = products
   });
 
 
-  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
+
+  const categories = [
+  { label: "All", slug: "all" },
+  ...Array.from(
+    new Map(
+      products.map(p => [
+        p.category.toLowerCase(),
+        { label: p.category, slug: p.category.toLowerCase() }
+      ])
+    ).values()
+  )
+];
+
 
   return (
     <CustomerLayout>
@@ -73,18 +100,28 @@ const filteredProducts = products
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-gray-900 mb-3">Category</h3>
                 <div className="space-y-2">
-                  {categories.map(cat => (
-                    <label key={cat} className="flex items-center">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={selectedCategory === cat}
-                        onChange={() => setSelectedCategory(cat)}
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                      />
-                      <span className="ml-2 text-sm text-gray-700 capitalize">{cat}</span>
-                    </label>
-                  ))}
+             {categories.map(cat => (
+  <label key={cat.slug} className="flex items-center">
+    <input
+      type="radio"
+      name="category"
+      checked={selectedCategory === cat.slug}
+      onChange={() => {
+        setSelectedCategory(cat.slug);
+
+        if (cat.slug === "all") {
+          searchParams.delete("category");
+          setSearchParams(searchParams);
+        } else {
+          setSearchParams({ category: cat.slug });
+        }
+      }}
+      className="w-4 h-4 text-blue-600"
+    />
+    <span className="ml-2 text-sm capitalize">{cat.label}</span>
+  </label>
+))}
+
                 </div>
               </div>
 

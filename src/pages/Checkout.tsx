@@ -39,30 +39,31 @@ export function Checkout() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  e.preventDefault();
+  setLoading(true);
+
   try {
     await placeOrder(
-      JSON.stringify({
-      items: cart,
-      subtotal,
-      shipping,
-      tax,
-      total,
-      paymentMethod,
-      shippingAddress: shippingInfo,
-    }),
-   token!
-  );
+      {
+        items: cart,
+        subtotal,
+        shipping,
+        tax,
+        total,
+        paymentMethod,
+        shippingAddress: shippingInfo,
+      },
+      token!
+    );
+
     clearCart();
-    navigate('/order-success');
+    navigate("/order-success");
   } catch (error) {
-    console.error('Error placing order:', error);
-  }finally{
+    console.error("Error placing order:", error);
+  } finally {
     setLoading(false);
   }
-  };
-
+};
 
   return (
     <CustomerLayout>

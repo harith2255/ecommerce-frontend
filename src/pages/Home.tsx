@@ -14,10 +14,26 @@ const [loading, setLoading] = useState(true);
 
 
   const categories = [
-    { name: 'Mobile', icon: Smartphone, color: 'bg-blue-500' },
-    { name: 'Laptop', icon: Laptop, color: 'bg-purple-500' },
-    { name: 'Clothes', icon: ShoppingBag, color: 'bg-pink-500' },
+    { name: 'Mobile', slug: 'mobile', icon: Smartphone, color: 'bg-blue-500' },
+    { name: 'Laptop', slug: 'laptop', icon: Laptop, color: 'bg-purple-500' },
+    { name: 'Clothes', slug: 'clothes', icon: ShoppingBag, color: 'bg-pink-500' },
   ];
+
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      } finally {
+        setLoading(false);
+      }
+      }
+      loadProducts();
+  }, []);
+
 
   const featuredProducts = products.slice(0, 4);
 
@@ -36,7 +52,7 @@ const [loading, setLoading] = useState(true);
             <Button
               size="lg"
               className="bg-gray text-blue-600 hover:bg-gray-100"
-              onClick={() => navigate('products')}
+              onClick={() => navigate('/products')}
             >
               Shop Now <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
@@ -51,7 +67,8 @@ const [loading, setLoading] = useState(true);
           {categories.map((category) => (
             <button
               key={category.name}
-              onClick={() => navigate('products')}
+              onClick={() => navigate(`/products?category=${category.slug}`)}
+
               className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 p-8 hover:shadow-xl transition-shadow"
             >
               <div className={`${category.color} w-16 h-16 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
@@ -72,7 +89,7 @@ const [loading, setLoading] = useState(true);
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Featured Products</h2>
-            <Button variant="outline" onClick={() => navigate('products')}>
+            <Button variant="outline" onClick={() => navigate('/products')}>
               View All
             </Button>
           </div>
@@ -81,7 +98,7 @@ const [loading, setLoading] = useState(true);
             {featuredProducts.map((product) => (
               <div
                 key={product.id}
-                onClick={() => navigate('product-detail', product)}
+                onClick={() => navigate('/product/' + product._id)}
                 className="group cursor-pointer bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"
               >
                 <div className="aspect-square overflow-hidden bg-gray-100">

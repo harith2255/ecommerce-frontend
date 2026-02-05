@@ -173,9 +173,9 @@ export function AdminDashboard() {
               {recentOrders.map((order) => {
                 const user = users.find(u => u.id === order.userId);
                 return (
-                  <tr key={order.id} className="hover:bg-gray-50">
+                  <tr key={order._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-900">{order.id}</span>
+                      <span className="text-sm font-medium text-gray-900">{order._id}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">{user?.name || 'Guest'}</span>
